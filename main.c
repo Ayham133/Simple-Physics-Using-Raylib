@@ -13,6 +13,8 @@ typedef struct Ball {
 	int raduis;
 } Ball;
 
+bool CollisionWithGroundCircle(Vector2 center, int raduis, int window_height);
+
 int main(void) {
 
 	const int window_width = 800;
@@ -65,7 +67,7 @@ int main(void) {
 		}
 
 		// Ball physics 
-		if (ballPositionY <= window_height - ball.raduis && !dragging) {// on Y-axis
+		if (CollisionWithGroundCircle(ball.position, ball.raduis, window_height) && !dragging) {// on Y-axis
 			ball.Velocity.y += GRAVITY * dt;
 			ball.position.y += ball.Velocity.y * dt;
 		} else {
@@ -105,4 +107,10 @@ int main(void) {
 	CloseWindow();
 
 	return EXIT_SUCCESS;
+}
+
+
+bool CollisionWithGroundCircle(Vector2 center, int raduis, int window_height) 
+{
+	return (center.y<= window_height - raduis);
 }
