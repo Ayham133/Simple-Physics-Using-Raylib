@@ -92,12 +92,14 @@ int main(void) {
 		  * Y-axis Forces and Collisions
 		  * 
 		  */
+		 // TODO: Fix Velocity.y bug
 		if (CheckCollisionWithGroundCircle(ball.position, ball.raduis, window_height) && !dragging) {
-			ball.Force.y = 0;
-			ball.Velocity.y = 0;
 			ball.position.y = (window_height - ball.raduis);
+
+			// Bounce in Y-axis, by the equation v' = -e * v
+			ball.Velocity.y *= -restitution;
 		} else if(!dragging){
-			ball.Force.y += Weight;
+			ball.Force.y += Weight; 
 		}
 
 		/**
@@ -174,7 +176,7 @@ int main(void) {
 
 		BeginDrawing();
 		ClearBackground(RAYWHITE);
-		DrawText(TextFormat("Ball's Velocity {%f, %f}, FPS: %i",ballVelocityX, ballVelocityY, GetFPS()),10, 10, 20, BLACK);
+		DrawText(TextFormat("Ball's Velocity {%.3f, %.3f}, FPS: %i",ballVelocityX, ballVelocityY, GetFPS()),10, 10, 20, BLACK);
 		DrawText(TextFormat("Mouse Velocity: {%.3f, %.3f}", mouseVelocity.x, mouseVelocity.y), 10, 40, 20, GRAY);
 		if(dragging)
 			DrawText("Dragging: enabled", 10, 60, 20, GREEN);
