@@ -16,8 +16,7 @@ typedef struct Ball {
 	float mass;
 } Ball;
 
-bool CollisionWithGroundCircle(Vector2 center, int raduis, int window_height);
-bool CheckCollisionWithGroundCirlcle(int ceterY, int raduis, int window_height);
+bool CheckCollisionWithGroundCircle(Vector2 center, int raduis, int window_height);
 bool CheckCollisionWithRightWindowEdgeCircle(float centerX, int raduis, int window_width, float velocityX);
 bool CheckCollisionWithLeftWindowEdgeCicle(float centerX, int raduis, float velocityX);
 
@@ -72,6 +71,8 @@ int main(void) {
 		if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && CheckCollisionPointCircle(ball.position, GetMousePosition(), 50.0f)){
 			dragging = true;
 			ball.position = GetMousePosition();
+			ball.Force = (Vector2){0,0};
+			ball.Velocity = (Vector2){0,0};
 		}
 
 		if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT)){
@@ -91,11 +92,12 @@ int main(void) {
 		  * Y-axis Forces and Collisions
 		  * 
 		  */
-		if (!CollisionWithGroundCircle(ball.position, ball.raduis, window_height) && !dragging) {
-			ball.Force.y += Weight;
-		} else {
+		if (CheckCollisionWithGroundCircle(ball.position, ball.raduis, window_height) && !dragging) {
 			ball.Force.y = 0;
 			ball.Velocity.y = 0;
+			ball.position.y = (window_height - ball.raduis);
+		} else if(!dragging){
+			ball.Force.y += Weight;
 		}
 
 		/**
@@ -123,7 +125,7 @@ int main(void) {
 		}
 
 		// Frinction force when the object (ball) is on the ground
-		if (CollisionWithGroundCircle(ball.position, ball.raduis, window_height) && !dragging)
+		if (CheckCollisionWithGroundCircle(ball.position, ball.raduis, window_height) && !dragging)
 		{
 			float friction = Mue * Normal;
 
@@ -192,8 +194,8 @@ int main(void) {
 }
 
 
-bool CollisionWithGroundCircle(Vector2 center, int raduis, int window_height) {
-	return (center.y > window_height - raduis);
+bool CheckCollisionWithGroundCircle(Vector2 center, int raduis, int window_height) {
+	return (center.y >= window_height - raduis);
 }
 
 bool CheckCollisionWithRightWindowEdgeCircle(float centerX, int raduis, int window_width, float velocityX){
