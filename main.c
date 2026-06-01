@@ -25,7 +25,7 @@ int main(void) {
 	const int window_width = 800;
 	const int window_height = 600;
 
-	InitWindow(window_width, window_height, "Simple Physics");
+	InitWindow(window_width, window_height, "Physics Engine 1.0");
 
 	const Vector2 GRAVITATIONAL_FORCE = {0.0f, 9.8f};
 
