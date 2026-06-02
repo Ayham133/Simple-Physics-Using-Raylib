@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include <stdlib.h>
+#include <math.h>
 
 #define GRAVITY 500.0f
 #define INITILA_VELOCITY_X -100
@@ -10,21 +11,31 @@
 typedef struct Ball {
 	Vector2 position;
 	Vector2 Velocity;
+	Vector2 Force;
 	int raduis;
+	float mass;
 } Ball;
+
+bool CheckCollisionWithGroundCircle(Vector2 center, int raduis, int window_height);
+bool CheckCollisionWithRightWindowEdgeCircle(float centerX, int raduis, int window_width, float velocityX);
+bool CheckCollisionWithLeftWindowEdgeCicle(float centerX, int raduis, float velocityX);
 
 int main(void) {
 
 	const int window_width = 800;
 	const int window_height = 600;
 
-	InitWindow(window_width, window_height, "Simple Physics");
+	InitWindow(window_width, window_height, "Physics Engine 1.0");
 
-	Ball ball = {{INITILA_POSITION_X, INITILA_POSITION_Y},{INITILA_VELOCITY_X, INITILA_VELOCITY_Y},50};
-	int ballVelocityX = ball.Velocity.x;
-	int ballVelocityY = ball.Velocity.y;
-	int ballPositionX = ball.position.x;
-	int ballPositionY = ball.position.y;
+	const Vector2 GRAVITATIONAL_FORCE = {0.0f, 9.8f};
+
+	Ball ball = {
+		.position = {window_height/2, window_width/2},
+		.Velocity = {0,0},
+		.Force = {0,0},
+		.raduis = 50,
+		.mass = 10.0f
+	};
 
 	Vector2  prevMousePos = GetMousePosition();
 	Vector2 mouseVelocity = {0.0f, 0.0f};
@@ -34,16 +45,19 @@ int main(void) {
 
 	while (!WindowShouldClose()) {
 		// Update Loop.
-		ballVelocityX = ball.Velocity.x;
-		ballVelocityY = ball.Velocity.y;
-		ballPositionX = ball.position.x;
-		ballPositionY = ball.position.y;
 
 		// Get current mouse position
 		Vector2 currentMousePos = GetMousePosition();
 
 		//---- Physics. ----
 		float dt = GetFrameTime();
+		float const Weight = ball.mass * GRAVITATIONAL_FORCE.y;
+		float const Normal = -Weight;
+		float const Mue = 5.0f;
+		float VelociytMagnitude; 
+		float KenaticEnergy;
+		float restitution = 0.8f;
+
 
 		// Calculate mouse velocity
 		if(dt > 0.0f){
@@ -57,6 +71,8 @@ int main(void) {
 		if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && CheckCollisionPointCircle(ball.position, GetMousePosition(), 50.0f)){
 			dragging = true;
 			ball.position = GetMousePosition();
+			ball.Force = (Vector2){0,0};
+			ball.Velocity = (Vector2){0,0};
 		}
 
 		if(IsMouseButtonReleased(MOUSE_BUTTON_LEFT)){
@@ -64,31 +80,103 @@ int main(void) {
 			ball.Velocity = mouseVelocity;
 		}
 
-		// Ball physics 
-		if (ballPositionY <= window_height - ball.raduis && !dragging) {// on Y-axis
-			ball.Velocity.y += GRAVITY * dt;
-			ball.position.y += ball.Velocity.y * dt;
-		} else {
-			ball.Velocity.y = 0;
+		/**
+		 *
+		 * 
+		 * Ball physics
+		 *
+		 */
+
+		 /**
+		  * 
+		  * Y-axis Forces and Collisions
+		  * 
+		  */
+		 // TODO: Fix Velocity.y bug
+		if (CheckCollisionWithGroundCircle(ball.position, ball.raduis, window_height) && !dragging) {
+			ball.position.y = (window_height - ball.raduis);
+
+			// Bounce in Y-axis, by the equation v' = -e * v
+			ball.Velocity.y *= -restitution;
+		} else if(!dragging){
+			ball.Force.y += Weight; 
 		}
-		if (ballPositionX <= window_width - ball.raduis && ballPositionX >= 0 + ball.raduis && !dragging)  {// on X-axis
-			ball.position.x += ball.Velocity.x * dt;
-		} else
-			ball.Velocity.x = 0;
+
+		/**
+		 * 
+		 * X-axis Forces and Collision  
+		 * 
+		 */
+
+		// Right wall Collision and Bouncing
+		if (CheckCollisionWithRightWindowEdgeCircle(ball.position.x, ball.raduis, window_width, ball.Velocity.x) && !dragging)
+		{
+			// Correct penetration, snapping the ball back by (window_width - ball.raduis)/ the exact position where the ball touches the wall.
+			ball.position.x = window_width - ball.raduis;
+			// Bounce, by the equation v' = -e * v
+			ball.Velocity.x *= -restitution;
+		}
+
+		// Left wall Collision and Bouncing
+		if (CheckCollisionWithLeftWindowEdgeCicle(ball.position.x, ball.raduis, ball.Velocity.x) && !dragging)
+		{
+			// Correct penetration, snapping the ball back by (ball.raduis)/ the exact position where the ball touches the wall.
+			ball.position.x = ball.raduis;
+			// Bounce, by the equation v' = -e * v
+			ball.Velocity.x *= -restitution;
+		}
+
+		// Frinction force when the object (ball) is on the ground
+		if (CheckCollisionWithGroundCircle(ball.position, ball.raduis, window_height) && !dragging)
+		{
+			float friction = Mue * Normal;
+
+			// Check if the friction will cause an overshoot.
+			if (fabs(ball.Velocity.x) < friction)
+				ball.Velocity.x = 0.0f;
+			else
+			{
+				if (ball.Velocity.x > 0.0f)
+					ball.Force.x = friction;
+				else 
+					ball.Force.x = -friction;
+			}
+		}
+
+		// Fixing the small Velocity bug (Computers don't know when it's trully zero)
+		if(fabs(ball.Velocity.x) < 0.5f){
+			ball.Velocity.x = 0.0f;
+			ball.Force.x = 0;
+		}
+
+		// Applying and updating Velocity vector and position vector.
+		ball.Velocity.y += (ball.Force.y / ball.mass) * dt;
+		ball.Velocity.x += (ball.Force.x/ ball.mass) * dt;
+
+		ball.position.y += ball.Velocity.y * dt;
+		ball.position.x += ball.Velocity.x * dt;
 
 		// Reset the ballPositionY
 		if (IsKeyDown(KEY_SPACE)) {
 			ball.position.y = 100;
-			ball.Velocity.x = 0;
-			ball.Velocity.y = 0;
+			ball.position.x = window_width/2;
+			ball.Force = (Vector2){.x = 0.0f, .y = 0.0f};
+			ball.Velocity = (Vector2){.x = 0.0f, .y = 0.0f};
 		}
 
 
 
+		/**
+		 * 
+		 * Drawing and rendering.
+		 * 
+		 */
+		float ballVelocityX = ball.Velocity.x;
+		float ballVelocityY = ball.Velocity.y;
 
 		BeginDrawing();
 		ClearBackground(RAYWHITE);
-		DrawText(TextFormat("Ball's Velocity {%i, %i}, FPS: %i", ballVelocityX, ballVelocityY, GetFPS()),10, 10, 20, BLACK);
+		DrawText(TextFormat("Ball's Velocity {%.3f, %.3f}, FPS: %i",ballVelocityX, ballVelocityY, GetFPS()),10, 10, 20, BLACK);
 		DrawText(TextFormat("Mouse Velocity: {%.3f, %.3f}", mouseVelocity.x, mouseVelocity.y), 10, 40, 20, GRAY);
 		if(dragging)
 			DrawText("Dragging: enabled", 10, 60, 20, GREEN);
@@ -105,4 +193,17 @@ int main(void) {
 	CloseWindow();
 
 	return EXIT_SUCCESS;
+}
+
+
+bool CheckCollisionWithGroundCircle(Vector2 center, int raduis, int window_height) {
+	return (center.y >= window_height - raduis);
+}
+
+bool CheckCollisionWithRightWindowEdgeCircle(float centerX, int raduis, int window_width, float velocityX){
+	return (centerX + raduis >= window_width && velocityX > 0.0f);
+}
+
+bool CheckCollisionWithLeftWindowEdgeCicle(float centerX, int raduis, float velocityX){
+	return (centerX - raduis <= 0.0f && velocityX < 0.0f);
 }
