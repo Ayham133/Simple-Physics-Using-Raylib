@@ -27,7 +27,7 @@ int main(void) {
 
 	InitWindow(window_width, window_height, "Physics Engine 1.0");
 
-	const Vector2 GRAVITATIONAL_FORCE = {0.0f, 9.8f};
+	const float GRAVITATIONAL_ACCELERATION= 980.0f; // Pixiles
 
 	Ball ball = {
 		.position = {window_height/2, window_width/2},
@@ -51,13 +51,12 @@ int main(void) {
 
 		//---- Physics. ----
 		float dt = GetFrameTime();
-		float const Weight = ball.mass * GRAVITATIONAL_FORCE.y;
+		float const Weight = ball.mass * GRAVITATIONAL_ACCELERATION;
 		float const Normal = -Weight;
 		float const Mue = 5.0f;
-		float VelociytMagnitude; 
-		float KenaticEnergy;
 		float restitution = 0.8f;
 
+		ball.Force = (Vector2){0.0f, 0.0f};
 
 		// Calculate mouse velocity
 		if(dt > 0.0f){
@@ -90,17 +89,24 @@ int main(void) {
 		 /**
 		  * 
 		  * Y-axis Forces and Collisions
-		  * 
+		  *
+		  * v = v + a *dt 
+		  *  
 		  */
-		 // TODO: Fix Velocity.y bug
-		if (CheckCollisionWithGroundCircle(ball.position, ball.raduis, window_height) && !dragging) {
-			ball.position.y = (window_height - ball.raduis);
+		 // TODO: Rewrite gravitinational force
 
-			// Bounce in Y-axis, by the equation v' = -e * v
-			ball.Velocity.y *= -restitution;
-		} else if(!dragging){
-			ball.Force.y += Weight; 
-		}
+		 if(!CheckCollisionWithGroundCircle(ball.position, ball.raduis, window_height)){
+			ball.Velocity.y += GRAVITATIONAL_ACCELERATION * dt; 
+		 }
+		 else{
+			ball.position.y = window_height - ball.raduis;
+
+			ball.Velocity.y = 0.0f;
+		 }
+
+		 ball.position.y += ball.Velocity.y *dt;
+
+		
 
 		/**
 		 * 
@@ -150,10 +156,7 @@ int main(void) {
 		}
 
 		// Applying and updating Velocity vector and position vector.
-		ball.Velocity.y += (ball.Force.y / ball.mass) * dt;
 		ball.Velocity.x += (ball.Force.x/ ball.mass) * dt;
-
-		ball.position.y += ball.Velocity.y * dt;
 		ball.position.x += ball.Velocity.x * dt;
 
 		// Reset the ballPositionY
