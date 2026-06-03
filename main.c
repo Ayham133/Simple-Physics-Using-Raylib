@@ -96,18 +96,24 @@ int main(void) {
 		  */
 		 // TODO: Rewrite gravitinational force
 
-		 if(!CheckCollisionWithGroundCircle(ball.position, ball.raduis, window_height)){
-			ball.Velocity.y += GRAVITATIONAL_ACCELERATION * dt; 
-		 }
-		 else{
+		 // When the ball is in free fall.
+		if (!CheckCollisionWithGroundCircle(ball.position, ball.raduis, window_height) && !dragging)
+		{
+			ApplayedForces.y += Weight;
+			ball.Force.y += ApplayedForces.y;
+
+			ball.Velocity.y += GRAVITATIONAL_ACCELERATION * dt;
+			ball.position.y += ball.Velocity.y * dt;
+		}
+
+		// When the ball hits the ground the forces in the y-axis is zero thus the velocity should be zero
+		if(CheckCollisionWithGroundCircle(ball.position, ball.raduis, window_height) && !dragging){
+			ball.Force.y = 0;
+			ball.Velocity.y = 0;
+
 			ball.position.y = window_height - ball.raduis;
+		}
 
-			ball.Velocity.y = 0.0f;
-		 }
-
-		 ball.position.y += ball.Velocity.y *dt;
-
-		
 
 		/**
 		 * 
