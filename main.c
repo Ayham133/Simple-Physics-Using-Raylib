@@ -56,7 +56,8 @@ int main(void) {
 		float const Mue = 5.0f;
 		float restitution = 0.8f;
 
-		ball.Force = (Vector2){0.0f, 0.0f};
+		// calculating the net applayed forces each farme and store them in the ball.Force
+		Vector2 ApplayedForces = (Vector2){0.0f, 0.0f};
 
 		// Calculate mouse velocity
 		if(dt > 0.0f){
