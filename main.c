@@ -1,35 +1,21 @@
 #include "raylib.h"
+#include "object.h"
 #include <stdlib.h>
 #include <math.h>
 
-#define GRAVITY 500.0f
-#define INITILA_VELOCITY_X -100
-#define INITILA_VELOCITY_Y 100
-#define INITILA_POSITION_X 400
-#define INITILA_POSITION_Y 300
-
-typedef struct Ball {
-	Vector2 position;
-	Vector2 Velocity;
-	Vector2 Force;
-	int raduis;
-	float mass;
-} Ball;
-
-bool CheckCollisionWithGroundCircle(Vector2 center, int raduis, int window_height);
-bool CheckCollisionWithRightWindowEdgeCircle(float centerX, int raduis, int window_width, float velocityX);
-bool CheckCollisionWithLeftWindowEdgeCicle(float centerX, int raduis, float velocityX);
+void initWindowHelper(int window_width, int window_height, char *window_title) {
+	InitWindow(window_width, window_height, window_title);
+}
 
 int main(void) {
 
 	const int window_width = 800;
 	const int window_height = 600;
-
-	InitWindow(window_width, window_height, "Physics Engine 1.0");
+	initWindowHelper(window_width, window_height, "Physics Engine 1.0");
 
 	const float GRAVITATIONAL_ACCELERATION= 980.0f; // Pixiles
 
-	Ball ball = {
+	Object ball = {
 		.position = {window_height/2, window_width/2},
 		.Velocity = {0,0},
 		.Force = {0,0},
@@ -94,10 +80,9 @@ int main(void) {
 		  * v = v + a *dt 
 		  *  
 		  */
-		 // TODO: Rewrite gravitinational force
 
 		 // When the ball is in free fall.
-		if (!CheckCollisionWithGroundCircle(ball.position, ball.raduis, window_height) && !dragging)
+		if (!CheckCollisionWithGround(ball.position.y, ball.raduis, window_height) && !dragging)
 		{
 			ApplayedForces.y += Weight;
 			ball.Force.y += ApplayedForces.y;
@@ -107,7 +92,7 @@ int main(void) {
 		}
 
 		// When the ball hits the ground the forces in the y-axis is zero thus the velocity should be zero
-		if(CheckCollisionWithGroundCircle(ball.position, ball.raduis, window_height) && !dragging){
+		if(CheckCollisionWithGround(ball.position.y, ball.raduis, window_height) && !dragging){
 			ball.Force.y = 0;
 
 			if(fabs(ball.Velocity.y) < 0.9f){
@@ -131,12 +116,12 @@ int main(void) {
 		 */
 
 		// When in free fall the horizontal forces should be zero.
-		if(!CheckCollisionWithGroundCircle(ball.position, ball.raduis, window_height) && !dragging)
+		if(!CheckCollisionWithGround(ball.position.y, ball.raduis, window_height) && !dragging)
 		{
 			ball.Force.x = 0;
 		}
 		// When the ball on the ground add friction. 
-		if(CheckCollisionWithGroundCircle(ball.position, ball.raduis, window_height) && !dragging)
+		if(CheckCollisionWithGround(ball.position.y, ball.raduis, window_height) && !dragging)
 		{
 			// friction force
 			float FrictionForce = 30.0f;
@@ -162,7 +147,7 @@ int main(void) {
 		}
 
 		// Right wall Collision and Bouncing
-		if (CheckCollisionWithRightWindowEdgeCircle(ball.position.x, ball.raduis, window_width, ball.Velocity.x) && !dragging)
+		if (CheckCollisionWithRightWindowEdge(ball.position.x, ball.raduis, window_width, ball.Velocity.x) && !dragging)
 		{
 			// Correct penetration, snapping the ball back by (window_width - ball.raduis)/ the exact position where the ball touches the wall.
 			ball.position.x = window_width - ball.raduis;
@@ -171,7 +156,7 @@ int main(void) {
 		}
 
 		// Left wall Collision and Bouncing
-		if (CheckCollisionWithLeftWindowEdgeCicle(ball.position.x, ball.raduis, ball.Velocity.x) && !dragging)
+		if (CheckCollisionWithLeftWindowEdge(ball.position.x, ball.raduis, ball.Velocity.x) && !dragging)
 		{
 			// Correct penetration, snapping the ball back by (ball.raduis)/ the exact position where the ball touches the wall.
 			ball.position.x = ball.raduis;
@@ -219,17 +204,4 @@ int main(void) {
 	CloseWindow();
 
 	return EXIT_SUCCESS;
-}
-
-
-bool CheckCollisionWithGroundCircle(Vector2 center, int raduis, int window_height) {
-	return (center.y >= window_height - raduis);
-}
-
-bool CheckCollisionWithRightWindowEdgeCircle(float centerX, int raduis, int window_width, float velocityX){
-	return (centerX + raduis >= window_width && velocityX > 0.0f);
-}
-
-bool CheckCollisionWithLeftWindowEdgeCicle(float centerX, int raduis, float velocityX){
-	return (centerX - raduis <= 0.0f && velocityX < 0.0f);
 }
