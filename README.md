@@ -28,7 +28,7 @@ It simulates a draggable ball with real physics based gravity, other forces acti
 Example using GCC:
 
 ``` bash
-gcc main.c -o game -lraylib -lm -lpthread -ldl -lrt -lX11
+gcc main.c object.c -o game -lraylib -lm -lpthread -ldl -lrt -lX11
 ```
 
 ## Run
