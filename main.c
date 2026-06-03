@@ -52,7 +52,7 @@ int main(void) {
 		//---- Physics. ----
 		float dt = GetFrameTime();
 		float const Weight = ball.mass * GRAVITATIONAL_ACCELERATION;
-		float const Normal = -Weight;
+		float const Normal = Weight;
 		float const Mue = 5.0f;
 		float restitution = 0.8f;
 
@@ -126,8 +126,40 @@ int main(void) {
 		/**
 		 * 
 		 * X-axis Forces and Collision  
-		 * 
+		 *
+		 * updating the x postion is on the line  183
 		 */
+
+		// When in free fall the horizontal forces should be zero.
+		if(!CheckCollisionWithGroundCircle(ball.position, ball.raduis, window_height) && !dragging)
+		{
+			ball.Force.x = 0;
+		}
+		// When the ball on the ground add friction. 
+		if(CheckCollisionWithGroundCircle(ball.position, ball.raduis, window_height) && !dragging)
+		{
+			// friction force
+			float FrictionForce = 30.0f;
+			// update the forces on the ball.
+			ball.Force.x = Mue * Weight;
+			// calculate the magnatued of the ball.Velocity vector.
+			float Velocity = sqrtf((ball.Velocity.x * ball.Velocity.x) + (ball.Velocity.y * ball.Velocity.y));
+
+			// apply friction just when the ball is moveing along the x-axis
+			if(Velocity > 0.0f){
+				float speedReduction = FrictionForce * dt;
+
+				// stop friction when the speed smaller than the force of friction (just stop the ball bro).
+				if(Velocity <= speedReduction){
+					ball.Velocity.x = 0.0f;
+					ball.Force.x = 0;
+				}
+				// else apply the friction calculated.
+				else{
+					ball.Velocity.x -= (ball.Velocity.x / Velocity) * speedReduction;
+				}
+			}
+		}
 
 		// Right wall Collision and Bouncing
 		if (CheckCollisionWithRightWindowEdgeCircle(ball.position.x, ball.raduis, window_width, ball.Velocity.x) && !dragging)
@@ -147,31 +179,7 @@ int main(void) {
 			ball.Velocity.x *= -restitution;
 		}
 
-		// Frinction force when the object (ball) is on the ground
-		if (CheckCollisionWithGroundCircle(ball.position, ball.raduis, window_height) && !dragging)
-		{
-			float friction = Mue * Normal;
-
-			// Check if the friction will cause an overshoot.
-			if (fabs(ball.Velocity.x) < friction)
-				ball.Velocity.x = 0.0f;
-			else
-			{
-				if (ball.Velocity.x > 0.0f)
-					ball.Force.x = friction;
-				else 
-					ball.Force.x = -friction;
-			}
-		}
-
-		// Fixing the small Velocity bug (Computers don't know when it's trully zero)
-		if(fabs(ball.Velocity.x) < 0.5f){
-			ball.Velocity.x = 0.0f;
-			ball.Force.x = 0;
-		}
-
-		// Applying and updating Velocity vector and position vector.
-		ball.Velocity.x += (ball.Force.x/ ball.mass) * dt;
+		// updating the x position of the ball after all the calculation of the ball.Velocity.x
 		ball.position.x += ball.Velocity.x * dt;
 
 		// Reset the ballPositionY
