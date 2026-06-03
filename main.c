@@ -109,9 +109,17 @@ int main(void) {
 		// When the ball hits the ground the forces in the y-axis is zero thus the velocity should be zero
 		if(CheckCollisionWithGroundCircle(ball.position, ball.raduis, window_height) && !dragging){
 			ball.Force.y = 0;
-			ball.Velocity.y = 0;
 
-			ball.position.y = window_height - ball.raduis;
+			if(fabs(ball.Velocity.y) < 0.9f){
+				ball.Velocity.y = 0.0f;
+				ball.position.y = window_height - ball.raduis;
+			}
+			else
+			{
+				ball.Velocity.y *= -restitution;
+				ball.position.y += ball.Velocity.y *dt;
+			}
+
 		}
 
 
