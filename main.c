@@ -2,6 +2,7 @@
 #include "include/object.h"
 #include <stdlib.h>
 #include <math.h>
+#include <stdio.h>
 
 void initWindowHelper(int window_width, int window_height, char *window_title) {
 	InitWindow(window_width, window_height, window_title);
@@ -23,7 +24,9 @@ int main(void) {
 		.Force = {0.0f, 0.0f},
 		.mass = 10.0f,
 		.raduis = 50,
-		.Velocity = {-100.0f, 0.0f}
+		.Velocity = {-100.0f, 0.0f},
+		.collision = false
+
 	};
 
 	objects[1] = (Object){
@@ -31,7 +34,9 @@ int main(void) {
 		.Force = {0.0f, 0.0f},
 		.mass = 10.0f,
 		.raduis = 50,
-		.Velocity = {-180.0f, 0.0f}
+		.Velocity = {-180.0f, 0.0f},
+		.collision = false
+
 	};
 
 	objects[2] = (Object){
@@ -39,34 +44,43 @@ int main(void) {
 		.Force = {0.0f, 0.0f},
 		.mass = 10.0f,
 		.raduis = 50,
-		.Velocity = {70.0f, 0.0f}
+		.Velocity = {70.0f, 0.0f},
+		.collision = false
+
 	};
 	objects[3] = (Object){
 		.position = {300, 100},
 		.Force = {0.0f, 0.0f},
 		.mass = 10.0f,
 		.raduis = 50,
-		.Velocity = {-120.0f, 0.0f}
+		.Velocity = {-120.0f, 0.0f},
+		.collision = false
+
 	};
 	objects[4] = (Object){
 		.position = {500,550}, 
 		.Force = {0.0f, 0.0f},
 		.mass = 10.0f,
 		.raduis = 50,
-		.Velocity = {50.0f, 0.0f}
+		.Velocity = {50.0f, 0.0f},
+		.collision = false
+
 	};
 	objects[5] = (Object){
 		.position = {700, 450},
 		.Force = {0.0f, 0.0f},
 		.mass = 10.0f,
 		.raduis = 50,
-		.Velocity = {200.0f, 0.0f}
+		.Velocity = {200.0f, 0.0f},
+		.collision = false
+
 	};
 
 	int draggingIndex =-1; 
 	Vector2  prevMousePos = GetMousePosition();
 	Vector2 mouseVelocity = {0.0f, 0.0f};
 	bool dragging = false;
+
 
 	SetTargetFPS(60);
 
@@ -240,6 +254,19 @@ int main(void) {
 				objects[i].Force = (Vector2){.x = 0.0f, .y = 0.0f};
 				objects[i].Velocity = (Vector2){.x = 0.0f, .y = 0.0f};
 			}
+
+			for (int j = 0; j < OBJECT_COUNT; j++)
+			{
+				if(i == j)
+					continue;
+
+				if (CheckCollisionWithBallV(&objects[i], &objects[j]))
+				{
+					objects[i].collision = true;
+					printf("collison happend between %d, and %d\n", i, j);
+				}
+			}
+			
 
 			
 		}
